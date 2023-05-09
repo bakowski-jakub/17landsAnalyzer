@@ -1,6 +1,7 @@
 import scrython
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 import csv
 import time
 import json
@@ -87,6 +88,37 @@ bucketLandCmcVeryHighWin = np.empty(bucketSize, dtype = np.int32)
 bucketTapCmcVeryHigh = np.empty(bucketSize, dtype = np.int32)
 bucketTapCmcVeryHighWin = np.empty(bucketSize, dtype = np.int32)
 
+land17WR = 0
+land16WR = 0
+
+tap17WR = 0
+tap16WR = 0
+
+land17WRVeryLow = 0
+land16WRVeryLow = 0
+tap17WRVeryLow = 0
+tap16WRVeryLow = 0
+
+land17WRLow = 0
+land16WRLow = 0
+tap17WRLow = 0
+tap16WRLow = 0
+
+land17WRNormal = 0
+land16WRNormal = 0
+tap17WRNormal = 0
+tap16WRNormal = 0
+
+land17WRHigh = 0
+land16WRHigh = 0
+tap17WRHigh = 0
+tap16WRHigh = 0
+
+land17WRVeryHigh = 0
+land16WRVeryHigh = 0
+tap17WRVeryHigh = 0
+tap16WRVeryHigh = 0
+
 ######################################
 def namePruning(string):
     prefix = "deck_"
@@ -94,8 +126,6 @@ def namePruning(string):
     return string
 
 def findCmc(cardName, setOracle):
-    #time.sleep(0.1)
-    #card = scrython.cards.Named(exact=string)
     cmc = 0
     for key in range(len(setOracle)):
         if setOracle[key]['name'] == cardName:
@@ -122,6 +152,7 @@ def populateMaskNonBasicLand(header, setOracle):
                         maskTapLand[col] = 1
                     if(setOracle[key]['name'] == "Terramorphic Expanse"):
                         maskTapLand[col] = 1
+                        print(col)
 
 def populateMaskAllLand():
     for i in range(cardsInSet):
@@ -175,7 +206,9 @@ def processRow(row):
     deckLandArray = np.multiply(deckArray, maskAllLand)
     deckLandCount = np.sum(deckLandArray)
     #print("Deck land count: " + str(deckLandCount) + "\n")
-
+    # throwing out all TE decks (219 - terramorphic expanse)
+    if(deckLandArray[219] == 1):
+        return
     deckTapArray = np.multiply(deckLandArray, maskTapLand)
     if(np.sum(deckTapArray) != 0 ):
         tapPresent = True
@@ -395,6 +428,26 @@ def retrieveBucketData():
     print("16 lands: \n")
     print("TOTAL GAMES: " + str(bucketTapCmcVeryHigh[16]) + "\n")
     print("WIN RATE: " + str(tap16WRVeryHigh))
+    X = ['not specified', 'VL','L','N','H', 'VH']
+    Y17tap = [tap17WR, tap17WRVeryLow, tap17WRLow, tap17WRNormal, tap17WRHigh, tap17WRVeryHigh]
+    Y17noTap = [land17WR, land17WRVeryLow, land17WRLow, land17WRNormal, land17WRHigh, land17WRVeryHigh]
+    Y16tap = [tap16WR, tap16WRVeryLow, tap16WRLow, tap16WRNormal, tap16WRHigh, tap16WRVeryHigh]
+    Y16noTap = [land16WR, land16WRVeryLow, land16WRLow, land16WRNormal, land16WRHigh, land16WRVeryHigh]
+
+    X_axis = np.arange(len(X))
+    
+    plt.bar(X_axis - 0.2, Y17noTap, 0.1, label = '17 lands [no taplands]')
+    plt.bar(X_axis - 0.1, Y17tap, 0.1, label = '17 lands [taplands]')
+    plt.bar(X_axis + 0.1, Y16noTap, 0.1, label = '16 lands [no taplands]')
+    plt.bar(X_axis + 0.2, Y16tap, 0.1, label = '16 lands [taplands]')
+    
+    plt.xticks(X_axis, X)
+    plt.xlabel("Groups")
+    plt.ylabel("WR")
+    plt.title("WR of decks sorted by CMC value")
+    plt.legend()
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == "__main__":
@@ -414,6 +467,7 @@ if __name__ == "__main__":
     #print(header)
     #print(maskCmcVal)
     maskEndTime = time.time()
+    print(maskTapLand)
     print("Masks succesfully populated [time: " + str(maskEndTime - maskStartTime) + "s].\n")
     bucketStartTime = time.time()
     initializeBuckets(bucketSize)
